@@ -37,7 +37,7 @@ func main() {
 
 ![](assets_sync.mutex源码解析/2022-08-31-18-13-53-image.png)
 
-![image-20220608181043473](https://cdn.jsdelivr.net/gh/nber1994/fu0k@master/uPic/image-2022060818104347320220608181043.png)
+
 
 ## 信号量
 
@@ -202,7 +202,11 @@ func (m *Mutex) Unlock() {
 }
 ```
 
-![互斥锁争抢的原理.png](https://cdn.jsdelivr.net/gh/nber1994/fu0k@master/uPic/26c0382433b84652a559a2dcb8201c82~tplv-k3u1fbpfcp-zoom-in-crop-mark:1304:0:0:02022031117562420220325173047.awebp)
+
+
+![26c0382433b84652a559a2dcb8201c82_tplv-k3u1fbpfcp-zoom-in-crop-mark_1304_0_0_02022031117562420220325173047.png](assets_sync.mutex源码解析/2e136e21f786231ba344c7f34d4d071a21ef395b.png)
+
+
 
 ## 加锁流程
 
@@ -411,7 +415,9 @@ xxxx
 
 事情往往是这样的，我们希望解决一个问题，想到了一个思路，进行了一些验证性的优化，拿到了一些不错的结果，然后我们会情不自禁的想随着这个思路加大优化力度，企图拿到更好的结果。那么新的问题往往也是在这个过程中产生的:P
 
-![image-20220327171133922](https://cdn.jsdelivr.net/gh/nber1994/fu0k@master/uPic/image-2022032717113392220220327171134.png)
+![](assets_sync.mutex源码解析/2022-08-31-18-18-13-image.png)
+
+
 
 我们分析了三版mutex的代码，也了解了当前的主要优化方向是 【通过提高锁竞争者的CPU持有时间，减少G的唤醒和休眠次数，来提高锁的整体性能】，那么这种优化思路给我们带来了哪些问题：
 
