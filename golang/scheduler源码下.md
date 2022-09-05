@@ -24,7 +24,7 @@ categories:
 
 在Goroutine和线程之间引入了中间层P，其数量对应于机器的核数，且只有P持有mcache，并且P托管了M运行所需的上下文。每个M都需要绑定到P上才能够获得G。
 
-<img src="images/image-202111241226080732021112412260820211124151844.png" alt="image-20211124122608073" style="zoom: 50%;" />
+<img src="../images/image-202111241226080732021112412260820211124151844.png" alt="image-20211124122608073" style="zoom: 50%;" />
 
 这样一来，每个M做到了减重，M变成了一个很干净的系统线程封装。减少了很多冗余的mcache。
 
@@ -64,23 +64,23 @@ type p struct {
 
 我们可以看到，mcache已经被P托管了，并且M只有获得P才能执行
 
-<img src="images/image-202111241349090142021112413490920211124151846.png" alt="image-20211124134909014" style="zoom: 33%;" />
+<img src="../images/image-202111241349090142021112413490920211124151846.png" alt="image-20211124134909014" style="zoom: 33%;" />
 
 ### 2. 资源竞争严重 & Goroutine传递问题 - P构建本地G队列
 
 为了减少全局锁的竞争，很常见的思路就是减少锁的粒度，在原有全局G队列的基础上，在每个P上也维护了本地G队列，并且保留全局G队列，作为一个G的暂存空间 & 负载均衡使用。而且本G创建的G'优先放入本地队列，很好的保证了局部性。
 
-<img src="images/2019-04-image-20190331160728024-4019648-2021112415184666020211124151846.png" alt="img" style="zoom: 50%;" />
+<img src="../images/2019-04-image-20190331160728024-4019648-2021112415184666020211124151846.png" alt="img" style="zoom: 50%;" />
 
 #### 1.新建Goroutine
 
-<img src="images/2019-04-image-20190331190809649-40304892021112413553720211124151847.png" alt="img"  />
+<img src="../images/2019-04-image-20190331190809649-40304892021112413553720211124151847.png" alt="img"  />
 
 p1拥有g1，m1获取p1后开始运行g1，g1使用`go func()`创建了g2，为了局部性g2优先加入到p1的本地队列。
 
 #### 2.Goroutine切换
 
-![img](images/2019-04-image-20190331190826838-403050620211124135714.png)
+![img](../images/2019-04-image-20190331190826838-403050620211124135714.png)
 
 #### 3.全局队列和本地G队列负载均衡
 
@@ -90,15 +90,15 @@ p1拥有g1，m1获取p1后开始运行g1，g1使用`go func()`创建了g2，为�
 
 假设每个p的本地队列只能存4个g。g2要创建了6个g，前4个g（g3, g4, g5, g6）已经加入p1的本地队列，p1本地队列满了。
 
-<img src="images/2019-04-image-20190331160728024-4019648-2021112415184666020211124151846.png" alt="img" style="zoom: 50%;" />
+<img src="../images/2019-04-image-20190331160728024-4019648-2021112415184666020211124151846.png" alt="img" style="zoom: 50%;" />
 
 g2在创建g7的时候，发现p1的本地队列已满，需要执行**负载均衡**，把p1中本地队列中前一半的g，还有新创建的g**转移**到全局队列（实现中并不一定是新的g，如果g是g2之后就执行的，会被保存在本地队列，利用某个老的g替换新g加入全局队列），这些g被转移到全局队列时，会被打乱顺序。所以g3,g4,g7被转移到全局队列。
 
-![img](images/2019-04-image-20190331162734830-40208542021112414022220211124151848.png)
+![img](../images/2019-04-image-20190331162734830-40208542021112414022220211124151848.png)
 
 从全局看，假设还有另外的p2绑定了m2，并且本地队列为空（m自旋状态）
 
-<img src="images/2019-04-image-20190331162717486-40208372021112414091320211124151848.png" alt="img" style="zoom:67%;" />
+<img src="../images/2019-04-image-20190331162717486-40208372021112414091320211124151848.png" alt="img" style="zoom:67%;" />
 
 此时m2尝试从全局队列(GQ)取一批g放到p2的本地队列（函数：`findrunnable`）。m2从全局队列取的g数量符合下面的公式：
 
@@ -112,7 +112,7 @@ n = min(len(GQ)/GOMAXPROCS + 1, len(GQ/2))
 
 除了从全局队列中获取G来运行之外，当全局队列为空时，P还会尝试从其他P的本地队列偷取一些来运行，反正总而言之就是让G在全局P上均匀的运行。
 
-<img src="images/2020-09-go-scheduler-p82021112414142920211124151848.png" alt="img" style="zoom:67%;" />
+<img src="../images/2020-09-go-scheduler-p82021112414142920211124151848.png" alt="img" style="zoom:67%;" />
 
 由此可见，当全局队列为空时，自旋的P2会从P2的本地队列中偷取一半到本地队列进行运行。
 
@@ -135,29 +135,29 @@ n = min(len(GQ)/GOMAXPROCS + 1, len(GQ/2))
 
 通过使用 NetPoller 进行网络系统调用，调度器可以防止 Goroutine 在进行这些系统调用时阻塞 M。这可以让 M 执行 P 的 LRQ 中其他的 Goroutines，而不需要创建新的 M。执行网络系统调用不需要额外的 M，**网络轮询器使用系统线程**
 
-<img src="images/go_scheduler_async_systemcall_12021112414241620211124151849.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_async_systemcall_12021112414241620211124151849.png" alt="img" style="zoom:67%;" />
 
 当前G1要进行网络请求，此时G1会被转移到NetPoller进行托管，P从本地G队列获取G2给到M继续执行。
 
-<img src="images/go_scheduler_async_systemcall_220211124142557.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_async_systemcall_220211124142557.png" alt="img" style="zoom:67%;" />
 
 G1执行完成后，G1放入原P的本地队列，继续等待执行
 
-<img src="images/go_scheduler_async_systemcall_32021112414263320211124151849.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_async_systemcall_32021112414263320211124151849.png" alt="img" style="zoom:67%;" />
 
 #### 系统调用阻塞
 
 G1即将进行阻塞型的同步系统调用
 
-<img src="images/go_scheduler_sync_systemcall_12021112414273720211124151850.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_sync_systemcall_12021112414273720211124151850.png" alt="img" style="zoom:67%;" />
 
 调度器会将M1，G1和P进行分离，同时引入新的M2来服务P
 
-<img src="images/go_scheduler_sync_systemcall_220211124142847.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_sync_systemcall_220211124142847.png" alt="img" style="zoom:67%;" />
 
 当G1系统调用完成后，G1会回归P的本地队列，等待继续执行
 
-<img src="images/go_scheduler_sync_systemcall_32021112414292420211124151850.png" alt="img" style="zoom:67%;" />
+<img src="../images/go_scheduler_sync_systemcall_32021112414292420211124151850.png" alt="img" style="zoom:67%;" />
 
 ## 四、抢占式调度器 · [1.2](https://github.com/golang/go/blob/go1.2/src/pkg/runtime/proc.c) ~ 至今
 
@@ -246,7 +246,7 @@ Go1.14 引入抢占式调度（使用信号的异步抢占机制），sysmon 仍
 
 ### 4.3 GMP Scheduler角色介绍
 
-<img src="images/image-202111241226080732021112412260820211124151844.png" alt="image-20211124122608073" style="zoom: 50%;" />
+<img src="../images/image-202111241226080732021112412260820211124151844.png" alt="image-20211124122608073" style="zoom: 50%;" />
 
 #### G
 
@@ -422,7 +422,7 @@ type schedt struct {
 
 ### 4.4 GMP 整体一张图
 
-<img src="images/ngqDBf20211124153819.jpg" alt="image-20211124153852657" style="zoom: 25%;" />
+<img src="../images/ngqDBf20211124153819.jpg" alt="image-20211124153852657" style="zoom: 25%;" />
 
 ### 4.5 程序初始化
 
@@ -435,11 +435,11 @@ go的启动流程分为4步
 
 和GM模型启动流程没有改变
 
-<img src="images/image-2021112415420457120211124154204.png" alt="image-20211124154204571" style="zoom:50%;" />
+<img src="../images/image-2021112415420457120211124154204.png" alt="image-20211124154204571" style="zoom:50%;" />
 
 ### 4.6 调度器初始化
 
-<img src="images/image-2021112415423084420211124154231.png" alt="image-20211124154230844" style="zoom:50%;" />
+<img src="../images/image-2021112415423084420211124154231.png" alt="image-20211124154230844" style="zoom:50%;" />
 
 schedinit这里对当前m进行了初始化，并根据osinit获取到的cpu核数和设置的`GOMAXPROCS` 确定p的数量，并进行初始化
 
@@ -636,7 +636,7 @@ func procresize(nprocs int32) *p {
 
 ### 4.7 协程创建
 
-<img src="images/image-2021112415505940820211124155059.png" alt="image-20211124155059408" style="zoom:50%;" />
+<img src="../images/image-2021112415505940820211124155059.png" alt="image-20211124155059408" style="zoom:50%;" />
 
 仍然是调用newproc1函数，和GM模型的区别是，先获取空闲的g复用，之后优先加入p本地运行g队列中，否则放入全局队列中。
 
@@ -747,19 +747,19 @@ func newproc1(fn *funcval, argp *uint8, narg int32, callergp *g, callerpc uintpt
 
 **获取空闲g**
 
-<img src="images/image-2021112415542677020211124155427.png" alt="image-20211124155426770" style="zoom:33%;" />
+<img src="../images/image-2021112415542677020211124155427.png" alt="image-20211124155426770" style="zoom:33%;" />
 
 先从p本地获取空闲g，没有则从全局获取空闲g
 
 **将g放入运行队列**
 
-<img src="images/image-2021112415562545320211124155625.png" alt="image-20211124155625453" style="zoom:50%;" />
+<img src="../images/image-2021112415562545320211124155625.png" alt="image-20211124155625453" style="zoom:50%;" />
 
 先尝试放入本地g队列，如果满了后，就尝试放入全局g队列
 
 ### 4.8 启动M
 
-<img src="images/image-2021112416002379220211124160024.png" alt="image-20211124160023792" style="zoom:50%;" />
+<img src="../images/image-2021112416002379220211124160024.png" alt="image-20211124160023792" style="zoom:50%;" />
 
 整体逻辑从之前的从g全局列表获取g变为了如果入参p!=nil，则为m找一个M（没有则创建），如果p==nil则尝试找到空闲P和M最匹配，并且最后唤醒m
 
@@ -817,7 +817,7 @@ func startm(_p_ *p, spinning bool) {
 
 ### 4.9 调度循环
 
-<img src="images/image-2021112416050288820211124160503.png" alt="image-20211124160502888" style="zoom:50%;" />
+<img src="../images/image-2021112416050288820211124160503.png" alt="image-20211124160502888" style="zoom:50%;" />
 
 **schedule**
 
@@ -936,7 +936,7 @@ func goexit0(gp *g) {
 
 最后调用schedule函数开始下一轮调用。
 
-<img src="images/image-2021112416291048520211124162911.png" alt="image-20211124162910485" style="zoom:50%;" />
+<img src="../images/image-2021112416291048520211124162911.png" alt="image-20211124162910485" style="zoom:50%;" />
 
 剩下的自己去看吧，我累了
 
