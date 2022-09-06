@@ -1,8 +1,8 @@
-tmux互斥锁，即如果锁被强占，后来的竞争者需要阻塞至锁被释放为止。
+> sync.tmux：互斥锁，即如果锁被强占，后来的竞争者需要阻塞至锁被释放为止。
 
-# 热身
+# 0、热身
 
-## 原子操作
+## 0.1 原子操作粒度
 
 ```go
 package main
@@ -33,9 +33,55 @@ func main() {
 
 ![](assets_sync.mutex源码解析/2022-08-31-18-13-53-image.png)
 
-## 信号量
+大概率不是2w，且结果一定比2w小。我们可以知道，即使是简单的counter++，也不是原子的。底层会被拆分为多个机器寄存器操作。
 
-# 初版锁实现
+## 0.2 如何处理并发竞争
+
+当两个并发单元同时要访问一个资源时，且访问操作往往不是原子性的，这个时候我们就需要构造一定机制，对这块资源（临界区）进行保护，保证同一时间只有一个并发单元访问临界区。往往有两种方式：
+
+### 0.2.1 自旋锁
+
+也就是我们常说的自旋锁，如果发现资源被占用，我们持续的去尝试看资源是否已被释放。
+
+![](../assets/2022-09-06-15-03-40-image.png)
+
+**总结：并发单元会一直尝试抢占资源，一旦资源释放可立刻进行抢占，但是在阻塞期间CPU会被持续占用，适合持有锁较短的场景**
+
+### 0.2.2 同步原语
+
+另外一种方式使用同步原语来保证临界区的互斥性，即当发现资源被占用时，我们直接讲当前的并发单元进行休眠，等待资源被释放时唤醒进行资源抢占。信号量就是其中的一种。
+
+信号量具备两种操作动作，称为V（`signal()`）与P（`wait()`）（即部分参考书常称的“PV操作”）。V操作会增加信号标S的数值，P操作会减少它。
+
+运作方式：
+
+- 设定初始的资源的数量。
+- P 操作：将信号量的计数值减去 1，**如果新值已经为负，那么调用者会被阻塞并加入到等待队列中**。否则，调用者会继续执行，并且获得一个资源。
+- V 操作：将信号量的计数值加 1，如果先前的计数值为负，就说明有等待的 P 操作的调用者。它会从等待队列中取出一个等待的调用者，唤醒它，让它继续执行。
+
+那么，我们就简单的看下信号量是如何实现的：
+
+![](../assets/2022-09-05-21-13-33-image.png)
+
+可以看到维护了一个队列，用来存放未获取到信号量的G，新来的G放入队尾，并且队列中的G全部是休眠状态
+
+当S被执行V操作，则从队列头部出队一个G进行唤醒，进入临界区
+
+**总结：这种方式释放了CPU，在阻塞期间CPU可以去做其他的事情，但是唤醒并发单元开销巨大，往往适合持有锁很长的场景**
+
+### 0.2.3 现实世界的妥协
+
+那么，两种方式都有各自的优缺点，但是现实世界中，持有锁时间长短往往是不确定的，那么我们往往会进行缝合操作。
+
+![](../assets/2022-09-06-15-22-03-image.png)
+
+先进行自旋，若自旋达到上限次数仍未拿到锁，那么再挂起当前并发单元。
+
+> 至此，热身完毕，我们来进入正题，看golang的互斥锁如何实现
+
+# 1、初版锁实现
+
+[初版锁的实现](https://github.com/golang/go/blob/release.r56/src/pkg/sync/mutex.go)，只是简单的套用了同步原语的范式，其中等待队列由runtime.Semacquire信号量实现。
 
 ```go
 package sync
@@ -73,9 +119,7 @@ func (m *Mutex) Unlock() {
 }
 ```
 
-## 信号量快速入门
-
-xxxx
+![](../assets/2022-09-06-19-56-38-image.png)
 
 这是最初mutex版本的实现，简单来说就是：
 
@@ -92,11 +136,21 @@ xxxx
 - 对一个未上锁的锁进行解锁操作
 - 当有过多的竞争者抢锁，int32到达上线后
 
-# 改进版 - 给要抢锁的G多一次机会
+# 2、改进版 - 给要抢锁的G多一次机会
 
-我们需要知道一个现状，**G的唤醒与休眠是一个昂贵的操作**，而大部分加锁的临界区都比较小。
+[改进版](https://github.com/golang/go/blob/weekly.2011-07-07/src/pkg/sync/mutex.go)，我们需要知道一个现状，**G的唤醒与休眠是一个昂贵的操作**，而大部分加锁的临界区都比较小。
 
 也就是说锁很可能很快就释放锁了，如果能让参与抢锁的G稍微再多一次重试，也许在下次重试时，锁已经被释放了，这样就免去了一次G的休眠和唤醒。
+
+这个版本对state字段进行了拆分
+
+![](../assets/2022-09-06-17-54-56-image.png)
+
+- 第一位，mutexLocked标记当前mutex的状态，1已加锁 0未加锁
+
+- 第二位，mutexWoken标记当前mutex上是否有已唤醒的G
+
+- 后面的位数里存储了当前的等待者的数量，mutexWaiterShift则是偏移量，可以根据这个偏移量获取到当前waiter的数目
 
 ```go
 // Copyright 2009 The Go Authors. All rights reserved.
@@ -146,19 +200,24 @@ func (m *Mutex) Lock() {
     awoke := false
     for {
         old := m.state
+        //先打上加锁标志
         new := old | mutexLocked
+        //如果之前的锁的状态为已加锁，则等待G的数量+1
         if old&mutexLocked != 0 {
             new = old + 1<<mutexWaiterShift
         }
+        //如果当前G是被唤醒的，则去掉mutexWoken标识
         if awoke {
             // The goroutine has been woken from sleep,
             // so we need to reset the flag in either case.
             new &^= mutexWoken
         }
         if atomic.CompareAndSwapInt32(&m.state, old, new) {
+            //如果更新成功后，原来的状态是未加锁，则说明我们加锁成功
             if old&mutexLocked == 0 {
                 break
             }
+            //否则说明加锁失败，当前G挂起等待被唤醒
             runtime.Semacquire(&m.sema)
             awoke = true
         }
@@ -173,6 +232,7 @@ func (m *Mutex) Lock() {
 // arrange for another goroutine to unlock it.
 func (m *Mutex) Unlock() {
     // Fast path: drop lock bit.
+    //直接去掉state的加锁标识
     new := atomic.AddInt32(&m.state, -mutexLocked)
     if (new+mutexLocked)&mutexLocked == 0 {
         panic("sync: unlock of unlocked mutex")
@@ -182,10 +242,13 @@ func (m *Mutex) Unlock() {
     for {
         // If there are no waiters or a goroutine has already
         // been woken or grabbed the lock, no need to wake anyone.
+        //如果当前等待者为0，或者当前锁已被加锁或者已经唤醒了一个G，则直接返回
         if old>>mutexWaiterShift == 0 || old&(mutexLocked|mutexWoken) != 0 {
             return
         }
         // Grab the right to wake someone.
+        //接下来要做的就是唤醒一个G，前提是我们先成功修改了state
+        //state上等待者数目-1，并且标识将要唤醒一个G
         new = (old - 1<<mutexWaiterShift) | mutexWoken
         if atomic.CompareAndSwapInt32(&m.state, old, new) {
             runtime.Semrelease(&m.sema)
@@ -206,13 +269,13 @@ func (m *Mutex) Unlock() {
    1. 保存当前状态old以备后续57行cas判断使用
    2. 创建一个新的状态new，并且打上加锁标识，以备后续进行更新
    3. 若old状态是已加锁
-      1. 则本G则会变成等待着，所以新增new中等待者的值
+      1. 则本G则会变成等待者，所以新增new中等待者的值
    4. 如果当前是被唤醒状态
       1. 说明当前G是被唤醒的，则给new清楚调唤醒标识
    5. 进行cas更新状态，以old作为比较值，new作为更新值，如果更新成功
       1. 判断old是否是未加锁的状态，若是
          1. 直接返回，说明我们抢到了锁
-      2. 进入休眠，等待被唤醒，代码会停止在这一步
+      2. 否则，进入休眠，等待被唤醒，代码会停止在这一步
       3. 设置awoke为true，标识当前G被唤醒了
 3. 开启下一轮for循环
 
@@ -236,11 +299,11 @@ func (m *Mutex) Unlock() {
 
 对于解锁者来说，我的任务一个是修改锁的加锁状态为未加锁，另外，我还要去尝试更新锁的状态为已唤醒，表示将要唤醒一个等待者，更新成功后，通过信号量唤醒一个G，解锁完毕。
 
-总体来说，这个版本的锁，给了第一次抢锁失败的竞争者一次另外的机会，再去抢一次锁。打破了原来的先到先得的公平性，越靠后的越有可能会有限抢到锁。
+**总体来说，这个版本的锁，给了第一次抢锁失败的竞争者一次另外的机会，再去抢一次锁，因为当前G还在CPU上，所以可以更小代价的获取到锁。但是这么做打破了原来的先到先得的公平性，越靠后的越有可能会抢到锁，且队列中的G抢到锁的概率会变小；同时，被唤醒的G如果没抢到锁，会被加入到队列的尾部，这近一步恶化了不公平的程度**
 
-# 改进版 v2 - 给要抢锁的G更多的机会
+# 3、改进版 v2 - 给要抢锁的G更多的机会
 
-上个版本，给抢锁的G多了一次机会，在一定程度上通过提高了cpu占用率与抢锁的公平性，换到了性能的提升。那么这一版本的改进就是，进一步的提高cpu占用率，看是否能获得更高的性能提升。
+上个版本，给抢锁的G多了一次机会，在一定程度上通过牺牲了cpu使用率与抢锁的公平性，换到了性能的提升。那么这一版本的改进就是，进一步的提高cpu占用率，看是否能获得更高的性能提升。
 
 ```go
 // Copyright 2009 The Go Authors. All rights reserved.
@@ -286,6 +349,7 @@ const (
 func (m *Mutex) Lock() {
     // Fast path: grab unlocked mutex.
     if atomic.CompareAndSwapInt32(&m.state, 0, mutexLocked) {
+        //忽略，竞争检测
         if raceenabled {
             raceAcquire(unsafe.Pointer(m))
         }
@@ -297,11 +361,15 @@ func (m *Mutex) Lock() {
     for {
         old := m.state
         new := old | mutexLocked
+        //如果之前的状态是已加锁
         if old&mutexLocked != 0 {
+            //判断是否可以自旋
             if runtime_canSpin(iter) {
                 // Active spinning makes sense.
                 // Try to set mutexWoken flag to inform Unlock
                 // to not wake other blocked goroutines.
+                //这里比较难理解，因为引入了自旋，那么当解锁时，自旋的G比唤醒的G更大概率会抢到锁，
+                //所以索性就不再唤醒G陪跑了
                 if !awoke && old&mutexWoken == 0 && old>>mutexWaiterShift != 0 &&
                     atomic.CompareAndSwapInt32(&m.state, old, old|mutexWoken) {
                     awoke = true
@@ -315,11 +383,15 @@ func (m *Mutex) Lock() {
         if awoke {
             // The goroutine has been woken from sleep,
             // so we need to reset the flag in either case.
+            //如果当前G是被唤醒的，但是之前的锁状态mutexWoken标识为0，
+            //说明state状态不对，代码有bug
             if new&mutexWoken == 0 {
                 panic("sync: inconsistent mutex state")
             }
+            //清除mutexWoken标识
             new &^= mutexWoken
         }
+        //尝试去更新锁状态
         if atomic.CompareAndSwapInt32(&m.state, old, new) {
             if old&mutexLocked == 0 {
                 break
@@ -348,6 +420,7 @@ func (m *Mutex) Unlock() {
     }
 
     // Fast path: drop lock bit.
+    //清除加锁标识
     new := atomic.AddInt32(&m.state, -mutexLocked)
     if (new+mutexLocked)&mutexLocked == 0 {
         panic("sync: unlock of unlocked mutex")
@@ -375,9 +448,15 @@ func (m *Mutex) Unlock() {
 
 为了实现多等一会的操作，我们最简单的操作就是sleep或者for循环一定次数，达到等待一阵子的目的，但是结合调度器来看，如果等待的时间过长的话，当前G会被打上抢占标识，可能会被调度让出cpu（这个概率很大），这正是我们希望避免的，所以我们引入了自旋操作，在自旋操作期间，我们可以保证当前G不会被调度出cpu。但是自旋一不小心就会造成死锁问题：
 
-## 自旋的条件
-
-xxxx
+> 自旋的条件
+> 
+> - 积累的自旋次数小于最大的自旋次数（iter为当前自旋次数）
+>   
+>   - 凡事都得有个最大限制，对吧
+> 
+> - CPU核数大于1，且GOMAXPROCS>1，且至少存在一个正在运行的P，且当前G所在P的本地运行队列中没有G
+>   
+>   - 这么做的目的是为了保证自旋的指令流和解锁的指令流不在一个CPU核上运行，否则自旋没有意义
 
 我们来看下新增的一些代码
 
@@ -411,16 +490,32 @@ xxxx
 
 1. 破坏了竞争者的公平性
    1. 越后来的竞争者越容易获得锁
+   2. 被唤醒的G如果竞争失败（大概率），会被放入队列尾部，进一步增加了阻塞时间
 2. 出现了饥饿问题
    1. 基于第一条，那些已经在信号量等待队列中的G，可能很长时间或者永远也拿不到锁
 3. 提高了CPU占用率
    1. 害，这个必须的
 
-# 最终版本 - 横扫饥饿，做回自己
+# 4、最终版本 - 横扫饥饿，做回自己
 
-基于上述的问题，最大的就是饥饿问题，信号量等待队列中的G可能会长时间等待甚至一直等待，这就是饥饿问题，为了解决这个问题，锁引入了饥饿模式，**在饥饿模式开启下，新来的竞争者G直接进入信号量等待队列，而不会再自旋。**
+基于上述的问题，最大的就是饥饿问题，信号量等待队列中的G可能会长时间等待甚至一直等待，这就是饥饿问题，其主要原因有两个：
 
-我们先来看下代码注释：
+1. 自旋的G更容易获取到锁，从而导致等待队列中的G阻塞时间加长
+
+2. 如果被唤醒的G竞争失败，会被放入队列尾部，进一步增加了阻塞时间
+
+为了解决这个问题，新版本的锁做了如下修改：
+
+1. 被唤醒的G如果未获取到锁，则放入队列的队首而不是队尾了
+
+2. 当G等待时间超过了1ms，则锁的所有权直接从解锁的G转交给等待队列队首的G，新的G不再自旋，直接加入到队尾，即进入饥饿模式。
+
+3. 当G拿到锁后，判断如果G是队列中最后一个，或者等待时间小于1ms，则将锁状态转为正常状态
+
+[新版本的锁](https://github.com/golang/go/blob/go1.5/src/sync/mutex.go) 
+
+我们先来看下代码：
+Lock
 
 ```go
 // Copyright 2009 The Go Authors. All rights reserved.
@@ -463,53 +558,7 @@ const (
     mutexWoken
     mutexStarving
     mutexWaiterShift = iota
-
-    // Mutex fairness.
-    //
-    // Mutex can be in 2 modes of operations: normal and starvation.
-    // In normal mode waiters are queued in FIFO order, but a woken up waiter
-    // does not own the mutex and competes with new arriving goroutines over
-    // the ownership. New arriving goroutines have an advantage -- they are
-    // already running on CPU and there can be lots of them, so a woken up
-    // waiter has good chances of losing. In such case it is queued at front
-    // of the wait queue. If a waiter fails to acquire the mutex for more than 1ms,
-    // it switches mutex to the starvation mode.
-    //
-    // In starvation mode ownership of the mutex is directly handed off from
-    // the unlocking goroutine to the waiter at the front of the queue.
-    // New arriving goroutines don't try to acquire the mutex even if it appears
-    // to be unlocked, and don't try to spin. Instead they queue themselves at
-    // the tail of the wait queue.
-    //
-    // If a waiter receives ownership of the mutex and sees that either
-    // (1) it is the last waiter in the queue, or (2) it waited for less than 1 ms,
-    // it switches mutex back to normal operation mode.
-    //
-    // Normal mode has considerably better performance as a goroutine can acquire
-    // a mutex several times in a row even if there are blocked waiters.
-    // Starvation mode is important to prevent pathological cases of tail latency.
-
-    // 公平锁
-    //
-    // 锁有两种模式：正常模式和饥饿模式。
-    // 在正常模式下，所有的等待锁的goroutine都会存在一个先进先出的队列中（轮流被唤醒）
-    // 但是一个被唤醒的goroutine并不是直接获得锁，而是仍然需要和那些新请求锁的（new arrivial）
-    // 的goroutine竞争，而这其实是不公平的，因为新请求锁的goroutine有一个优势——它们正在CPU上
-    // 运行，并且数量可能会很多。所以一个被唤醒的goroutine拿到锁的概率是很小的。在这种情况下，
-    // 这个被唤醒的goroutine会加入到队列的头部。如果一个等待的goroutine有超过1ms（写死在代码中）
-    // 都没获取到锁，那么就会把锁转变为饥饿模式。
-    //
-    // 在饥饿模式中，锁的所有权会直接从释放锁(unlock)的goroutine转交给队列头的goroutine，
-    // 新请求锁的goroutine就算锁是空闲状态也不会去获取锁，并且也不会尝试自旋。它们只是排到队列的尾部。
-    //
-    // 如果一个goroutine获取到了锁之后，它会判断以下两种情况：
-    // 1. 它是队列中最后一个goroutine；
-    // 2. 它拿到锁所花的时间小于1ms；
-    // 以上只要有一个成立，它就会把锁转变回正常模式。
-
-    // 正常模式会有比较好的性能，因为即使有很多阻塞的等待锁的goroutine，
-    // 一个goroutine也可以尝试请求多次锁。
-    // 饥饿模式对于防止尾部延迟来说非常的重要。
+    //等待阈值1ms
     starvationThresholdNs = 1e6
 )
 
@@ -537,6 +586,7 @@ func (m *Mutex) lockSlow() {
     for {
         // Don't spin in starvation mode, ownership is handed off to waiters
         // so we won't be able to acquire the mutex anyway.
+        //如果之前锁的状态是已上锁并非饥饿模式，那么我们尝试自旋
         if old&(mutexLocked|mutexStarving) == mutexLocked && runtime_canSpin(iter) {
             // Active spinning makes sense.
             // Try to set mutexWoken flag to inform Unlock
@@ -552,9 +602,12 @@ func (m *Mutex) lockSlow() {
         }
         new := old
         // Don't try to acquire starving mutex, new arriving goroutines must queue.
+        //如果之前状态非饥饿，才抢锁，如果之前状态是饥饿状态，那么当前G是需要去排队的
         if old&mutexStarving == 0 {
             new |= mutexLocked
         }
+        //如果之前状态为饥饿状态，当前G挂起
+        //如果之前状态已被加锁，当前G挂起
         if old&(mutexLocked|mutexStarving) != 0 {
             new += 1 << mutexWaiterShift
         }
@@ -562,6 +615,8 @@ func (m *Mutex) lockSlow() {
         // But if the mutex is currently unlocked, don't do the switch.
         // Unlock expects that starving mutex has waiters, which will not
         // be true in this case.
+        //如果当前饥饿标识为true，并且之前锁的状态为已加锁，才能更新锁状态为饥饿
+        //因为如果之前锁的状态为未加锁，TODO
         if starving && old&mutexLocked != 0 {
             new |= mutexStarving
         }
@@ -574,22 +629,26 @@ func (m *Mutex) lockSlow() {
             new &^= mutexWoken
         }
         if atomic.CompareAndSwapInt32(&m.state, old, new) {
+            //如果之前状态是非已加锁，且非饥饿状态，则说明我们更新的state是加锁操作，直接返回即可
             if old&(mutexLocked|mutexStarving) == 0 {
                 break // locked the mutex with CAS
             }
             // If we were already waiting before, queue at the front of the queue.
+            //如果之前等待过，本次没有抢到锁，那么我们这次放入到队列对首
             queueLifo := waitStartTime != 0
             if waitStartTime == 0 {
                 waitStartTime = runtime_nanotime()
             }
             runtime_SemacquireMutex(&m.sema, queueLifo, 1)
+            //如果之前的starving为true，说明之前等待时间就已经超过了1
             starving = starving || runtime_nanotime()-waitStartTime > starvationThresholdNs
-            old = m.state
+            old = m.state            
             if old&mutexStarving != 0 {
                 // If this goroutine was woken and mutex is in starvation mode,
                 // ownership was handed off to us but mutex is in somewhat
                 // inconsistent state: mutexLocked is not set and we are still
                 // accounted as waiter. Fix that.
+                //如果之前的状态为饥饿，当前G是唯一被唤醒的G，那么如果之前的状态是仍然是加锁或者已唤醒状态，或者当前G是最后一个等待者，这都是不对的状态
                 if old&(mutexLocked|mutexWoken) != 0 || old>>mutexWaiterShift == 0 {
                     throw("sync: inconsistent mutex state")
                 }
@@ -616,7 +675,11 @@ func (m *Mutex) lockSlow() {
         race.Acquire(unsafe.Pointer(m))
     }
 }
+```
 
+Unlock
+
+```go
 // Unlock unlocks m.
 // It is a run-time error if m is not locked on entry to Unlock.
 //
@@ -673,28 +736,14 @@ func (m *Mutex) unlockSlow(new int32) {
 }
 ```
 
-锁的state中新增了一个是否饥饿的标识位，同时定义了一个1ms的常量作为是否饥饿的判断阈值。
+# 写在最后
 
-```go
-// 公平锁
-//
-// 锁有两种模式：正常模式和饥饿模式。
-// 在正常模式下，所有的等待锁的goroutine都会存在一个先进先出的队列中（轮流被唤醒）
-// 但是一个被唤醒的goroutine并不是直接获得锁，而是仍然需要和那些新请求锁的（new arrivial）
-// 的goroutine竞争，而这其实是不公平的，因为新请求锁的goroutine有一个优势——它们正在CPU上
-// 运行，并且数量可能会很多。所以一个被唤醒的goroutine拿到锁的概率是很小的。在这种情况下，
-// 这个被唤醒的goroutine会加入到队列的头部。如果一个等待的goroutine有超过1ms（写死在代码中）
-// 都没获取到锁，那么就会把锁转变为饥饿模式。
-//
-// 在饥饿模式中，锁的所有权会直接从释放锁(unlock)的goroutine转交给队列头的goroutine，
-// 新请求锁的goroutine就算锁是空闲状态也不会去获取锁，并且也不会尝试自旋。它们只是排到队列的尾部。
-//
-// 如果一个goroutine获取到了锁之后，它会判断以下两种情况：
-// 1. 它是队列中最后一个goroutine；
-// 2. 它拿到锁所花的时间小于1ms；
-// 以上只要有一个成立，它就会把锁转变回正常模式。
+有一个很尴尬的现实，golang虽然推荐使用channel来处理并发资源竞争，但是不可否认的是锁仍是目前最广泛的处理竞争的手段。
 
-// 正常模式会有比较好的性能，因为即使有很多阻塞的等待锁的goroutine，
-// 一个goroutine也可以尝试请求多次锁。
-// 饥饿模式对于防止尾部延迟来说非常的重要。
-```
+在知名的开源软件Docker、Kubernutes、etcd、gRPC中，使用Mutex的频率是最高的。
+
+channel加解锁 VS mutex加解锁 = 3.6 ：1
+
+对于该如何选择？可以简单参考下图
+
+![image20210203001138068](https://chende.ren/tech/lang/golang/study/img/image-20210203001138068.png)
