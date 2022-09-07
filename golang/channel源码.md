@@ -1,10 +1,3 @@
----
-title: golang channel浅析
-date: 2022-02-17
-categories: 
-- go
----
-
 # 并发编程模型
 
 ![img](../images/cf91b4c995dd4ee2bbcf8662dd7d3e9120211227192856.jpeg)
