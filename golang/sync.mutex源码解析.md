@@ -144,9 +144,7 @@ func (m *Mutex) Unlock() {
 
 这个版本对state字段进行了拆分
 
-![](../assets/2022-09-06-17-54-56-image.png)
-
-- 第一位，mutexLocked标记当前mutex的状态，1已加锁 0未加锁
+- ![](../assets/2022-09-07-11-24-56-image.png)
 
 - 第二位，mutexWoken标记当前mutex上是否有已唤醒的G
 
@@ -514,6 +512,10 @@ func (m *Mutex) Unlock() {
 
 [新版本的锁](https://github.com/golang/go/blob/go1.5/src/sync/mutex.go) 
 
+相应的，state字段也新增了关于饥饿的标识位
+
+![](../assets/2022-09-07-11-24-12-image.png)
+
 我们先来看下代码：
 Lock
 
@@ -586,7 +588,8 @@ func (m *Mutex) lockSlow() {
     for {
         // Don't spin in starvation mode, ownership is handed off to waiters
         // so we won't be able to acquire the mutex anyway.
-        //如果之前锁的状态是已上锁并非饥饿模式，那么我们尝试自旋
+        //只有当前锁已加锁且非饥饿状态，当前G才可以进行自旋
+        //其余情况下自旋没有意义
         if old&(mutexLocked|mutexStarving) == mutexLocked && runtime_canSpin(iter) {
             // Active spinning makes sense.
             // Try to set mutexWoken flag to inform Unlock
@@ -615,8 +618,7 @@ func (m *Mutex) lockSlow() {
         // But if the mutex is currently unlocked, don't do the switch.
         // Unlock expects that starving mutex has waiters, which will not
         // be true in this case.
-        //如果当前饥饿标识为true，并且之前锁的状态为已加锁，才能更新锁状态为饥饿
-        //因为如果之前锁的状态为未加锁，TODO
+        //如果当前G等待大于1ms后被唤醒，且当前锁为已加锁状态，那么要更新下锁的状态为饥饿
         if starving && old&mutexLocked != 0 {
             new |= mutexStarving
         }
@@ -640,9 +642,9 @@ func (m *Mutex) lockSlow() {
                 waitStartTime = runtime_nanotime()
             }
             runtime_SemacquireMutex(&m.sema, queueLifo, 1)
-            //如果之前的starving为true，说明之前等待时间就已经超过了1
+            //如果之前的starving为true，说明之前等待时间就已经超过了1ms
             starving = starving || runtime_nanotime()-waitStartTime > starvationThresholdNs
-            old = m.state            
+            old = m.state            
             if old&mutexStarving != 0 {
                 // If this goroutine was woken and mutex is in starvation mode,
                 // ownership was handed off to us but mutex is in somewhat
@@ -653,6 +655,7 @@ func (m *Mutex) lockSlow() {
                     throw("sync: inconsistent mutex state")
                 }
                 delta := int32(mutexLocked - 1<<mutexWaiterShift)
+                //如果当前G的等待时长<1ms或者当前G是最后一个等待着，切换为正常状态
                 if !starving || old>>mutexWaiterShift == 1 {
                     // Exit starvation mode.
                     // Critical to do it here and consider wait time.
@@ -746,4 +749,4 @@ channel加解锁 VS mutex加解锁 = 3.6 ：1
 
 对于该如何选择？可以简单参考下图
 
-![image20210203001138068](https://chende.ren/tech/lang/golang/study/img/image-20210203001138068.png)
+![](../assets/ca3702492edefaae41ba47f52a93456196e5f096.png)
