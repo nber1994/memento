@@ -23,18 +23,18 @@ unit占用轻！unit切换快！
    1. 每个进程占用的内存太大了，进程携带了自己的虚拟内存页表，文件描述符等
 2. 不能发挥多核的性能
    1. 进程不能很好的发挥多核机器的性能，常常出现一个核跑，多个核看的现象
-   2. <img src="images/image-20211117181946354.png" alt="image-20211117181946354" style="zoom: 50%;" />
+   2. <img title="" src="../assets/image-20211117181946354.png" alt="loading-ag-7560" style="zoom: 50%;">
 3. 进程切换消耗过大
    1. 进程切换需要进行系统调用，涉及到内存从用户态拷贝至内核态
    2. 保存当前进程的现场，并且恢复下一个进程
 
-<img src="images/image-20211117192847504.png" alt="image-20211117192847504" style="zoom:50%;" />
+<img title="" src="../assets/image-20211117192847504.png" alt="image-20211117192847504" style="zoom:50%;">
 
 ### 线程作为Unit
 
 线程较轻量级，一个进程可以包含多个线程，则每个最小并发粒度的资源占用要小很多，且同一个进程内线程间切换只需要对指令流进行切换即可。
 
-<img src="images/image-20211118005842113.png" alt="image-20211118005842113" style="zoom:50%;" />
+<img title="" src="../assets/image-20211118005842113.png" alt="image-20211118005842113" style="zoom:50%;">
 
 但是，进程间切换仍需要进入内核进行，仍然存在大量的并发切换消耗
 
@@ -56,7 +56,7 @@ unit占用轻！unit切换快！
 
 ### 共享内存+锁
 
-<img src="images/image-2021122720381900520211227203819.png" alt="image-20211227203819005" style="zoom:50%;" />
+<img title="" src="../assets/image-2021122720381900520211227203819.png" alt="image-20211227203819005" style="zoom:50%;">
 
 最经典的模型，通过锁来保护资源，多个并发单元访问资源前首先争夺锁，然后再去访问资源。没抢到锁的unit则阻塞等待。
 
@@ -122,7 +122,7 @@ func (cc *CheckerCollector) Report(key string, res *CheckRes) {
 
 Actor的主要思路是，每个并发单元抽象为actor，每个actor都拥有一个邮箱**，所有actor间的通信都会异步的发送到对方的邮箱中**，这样**解耦了actor**之间的关系，各个actor都能按照自己的步调进行执行，但是他们会按照邮箱中消息的发送顺序来依次处理消息，当且仅当前一个消息处理完成后，才会开始下一个消息处理，即**保障了消息的时序性**。
 
-<img src="images/image-2021122819182969720211228191830.png" alt="image-20211228191829697" style="zoom:67%;" />
+<img title="" src="../assets/image-2021122819182969720211228191830.png" alt="image-20211228191829697" style="zoom:67%;">
 
 这样的话，在并发单元执行过程中，也不会存在锁资源的竞争，但是由于发送过程是异步的，即只将消息放入目标actor的邮箱中即完成了发送操作，但是消息什么时候会被目标actor处理，则是不可预测的。
 
@@ -183,7 +183,7 @@ ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) ElementType .
 
 #### 无缓冲channel
 
-<img src="images/image-2022010321131727020220103211317.png" alt="image-20220103211317270" style="zoom:67%;" />
+<img src="../images/image-2022010321131727020220103211317.png" alt="image-20220103211317270" style="zoom:67%;" />
 
 无缓冲区的channel又叫做阻塞channel，举个例子
 
@@ -226,7 +226,7 @@ func main() {
 
 #### 有缓冲的channel
 
-<img src="images/image-2022010317133827620220103171339.png" alt="image-20220103171338276" style="zoom:67%;" />
+<img title="" src="../assets/image-2022010317133827620220103171339.png" alt="image-20220103171338276" style="zoom:67%;">
 
 我们可以在channel初始化时声明其容量
 
@@ -656,14 +656,14 @@ buf作为channel的缓冲区，他是一个环形的ringbuffer。
 1. send操作时，需要重新分配内存创建一个链表节点。
 2. recv操作时，recv后的链表节点需要GC去识别与回收内存。
 
-<img src="images/image-2022010420102572120220104201026.png" alt="image-20220104201025721" style="zoom:50%;" />
+<img title="" src="../assets/image-2022010420102572120220104201026.png" alt="image-20220104201025721" style="zoom:50%;">
 
 那么如果使用ringbuffer的话，
 
 1. 首先，一次分配内存后，无论send还是recv操作，都不存在内存分配操作，而且减少了GC的压力。
 2. 而且，由于数组的大小是固定的，可以直接将ringbuffer和hchan放入连续内存中，提高访问速度。
 
-<img src="images/image-2022010421265878120220104212659.png" alt="image-20220104212658781" style="zoom:50%;" />
+<img title="" src="../assets/image-2022010421265878120220104212659.png" alt="image-20220104212658781" style="zoom:50%;">
 
 #### ring buf 算法
 
@@ -826,7 +826,7 @@ func makechan(t *chantype, size int) *hchan {
 
 抛去和GC相关的检测代码，我们可以简单的总结一下，首先创建一个hchan的结构体，然后给缓冲区分配好对应的内存，且缓冲区和hchan内存是连续的。
 
-<img src="images/image-2022010421265878120220104212659.png" alt="image-20220104212658781" style="zoom:50%;" />
+<img title="" src="../images/image-2022010421265878120220104212659.png" alt="loading-ag-7583" style="zoom:50%;">
 
 ## 发送
 
