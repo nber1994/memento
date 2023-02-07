@@ -12,13 +12,13 @@
 
 >  一切要从1946年说起，当世界第一台计算机问世时，世界拥有了第一台计算机。（废话文学）
 
-![埃尼阿克(eniac)](../images/image-20211106180745370.png)
+![埃尼阿克(eniac)](../../images/image-20211106180745370.png)
 
 当时的埃尼阿克(eniac)是为了计算炮弹轨迹而发明的，将你要计算的程序打到纸带上，接通电源，等待执行结果。期间不能暂停，也不能做其他任何事情。它上面没有操作系统，更别提进程、线程和协程了。
 
 ## 2. 单进程时代
 
-![img](../images/2019-03-apple-II.jpeg)
+![img](../../images/2019-03-apple-II.jpeg)
 
 后来，现代化的计算机有了操作系统，操作系统上可以安装多个应用，每个应用程序都包装为一个进程。它主要包括两部分：
 
@@ -27,11 +27,11 @@
 
 但是，当时的操作系统在一段时间只能运行一个进程，直到这个进程运行完，才能运行下一个进程，这个时期可以称为**单进程时代——串行时代**。
 
-<img src="../images/image-20211117161413897.png" alt="image-20211117161413897" style="zoom: 33%;" />
+<img src="../../images/image-20211117161413897.png" alt="image-20211117161413897" style="zoom: 33%;" />
 
 和ENIAC相比，单进程时代运行速度已有了几万倍的提度，但依然是太慢了，比如进程要读数据阻塞了，CPU就在那里浪费着，程序员们就想了，不能浪费啊，**怎么才能充分的利用CPU呢？** 如果在cpu等待时，切换到另外的进程进行执行，CPU的效率就提高上来了。
 
-<img src="../images/913365-20160915163500758-1708346238-20211117164032323.png" alt="进程切换" style="zoom:50%;" />
+<img src="../../images/913365-20160915163500758-1708346238-20211117164032323.png" alt="进程切换" style="zoom:50%;" />
 
 ## 3. 多进程时代
 
@@ -39,7 +39,7 @@
 
 后来操作系统就具有了**最早的并发能力：多进程并发**，当一个进程阻塞的时候，切换到另外等待执行的进程，这样就能尽量把CPU利用起来，CPU就不浪费了。
 
-<img src="../images/K9K9Yq.png" alt="image-20211117164228096" style="zoom: 33%;" /> 
+<img src="../../images/K9K9Yq.png" alt="image-20211117164228096" style="zoom: 33%;" /> 
 
 给用户造成的假象就是，A B C三个进程同时在运行着。然而，为了实现这个目标，操作系统变得格外的复杂。
 
@@ -56,7 +56,7 @@
 
 进程启动时，操作系统会为进程分配一块虚拟内存空间，每个进程拿到的 **虚拟内存空间布局是相同的**，**且大小等于机器实际物理内存大小**，但是实际上这块连续的内存空间对应机器内存中是一块块的内存碎片，这个假象是由虚拟内存技术实现的。
 
-![image-20211106173230814](../images/image-20211106173230814.png)
+![image-20211106173230814](../../images/image-20211106173230814.png)
 
 进程需要访问某个地址时，例如0x004005，都会先去查询页表，定位到对应的PTE（页表项），PTE记录着对应的真实的物理内存地址，继而再对这个真实地址进行访问。
 
@@ -66,7 +66,7 @@
 
 32位机器：
 
-![image-20211106170342935](../images/image-20211106170342935.png)  
+![image-20211106170342935](../../images/image-20211106170342935.png)  
 
 从低位向高位看：
 
@@ -154,11 +154,11 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 
 当代计算机，硬件有了很大的进步，出现了多核，多cpu的计算机配置。我们简单的拆解下：
 
-<img src="../images/image-20211117181157264.png" alt="image-20211117181157264" style="zoom:50%;" /> 
+<img src="../../images/image-20211117181157264.png" alt="image-20211117181157264" style="zoom:50%;" /> 
 
 这个是一个多CPU & 多核的机器图解，可以看到每个CPU有两个核，核即是计算单元，且每个CPU都有自己的高速缓存。那么针对进程，每个进程都是独占机器资源，我们可以得到进程被唤醒时运行的情况：
 
-<img src="../images/image-20211117181946354.png" alt="image-20211117181946354" style="zoom:50%;" /> 
+<img src="../../images/image-20211117181946354.png" alt="image-20211117181946354" style="zoom:50%;" /> 
 
 可以看到，每个cpu有一个核是空闲的，这就浪费了多核的优势了
 
@@ -168,7 +168,7 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 
 一个进程的内存空间分为用户空间和内核空间，相应的，一个进程也分为两种状态，内核态和用户态，对于用户代码逻辑，是在用户态执行的，对于内核的逻辑，例如系统调用，进程调度等，都需要将进程提升进入内核态进行执行。
 
-<img src="../images/view.png" alt="preview" style="zoom:75%;" />
+<img src="../../images/view.png" alt="preview" style="zoom:75%;" />
 
 且内核态和用户态之间内存隔离，用户态到内存态切换开销是非常大的，但是它的开销大在那里呢？简单点来说有下面几点
 
@@ -180,7 +180,7 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 - 复制内核态代码执行结果，回到用户态
 - 恢复用户态现场（上下文、寄存器、用户栈等）
 
-<img src="../images/image-20211117192847504.png" alt="image-20211117192847504" style="zoom:50%;" />
+<img src="../../images/image-20211117192847504.png" alt="image-20211117192847504" style="zoom:50%;" />
 
 这还不算上内核在切换pcb时对寄存器和高速缓存的修改耗时，简单来说，进程的切换需要进行内核态和用户态的切换，这个消耗是十分巨大的。
 
@@ -190,7 +190,7 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 
 我们知道，一个进程有两部分组成，数据 & 指令，那么如果多个进程间共享一套数据，但是拥有多个指令流是不是就能解决上述的两个问题呢，于是线程就诞生了。一个进程可以拥有多个线程，每个线程共享一套数据，但是保留各自独立的指令流。
 
-<img src="../images/image-20211117194339614.png" alt="image-20211117194339614" style="zoom:50%;" />
+<img src="../../images/image-20211117194339614.png" alt="image-20211117194339614" style="zoom:50%;" />
 
 ### 拓展-TCMalloc(Thread-Caching Malloc)
 
@@ -198,7 +198,7 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 
 对，所以针对这类锁竞争，操作系统使用了线程本地缓存技术来降低锁的竞争，其核心策略就是降低锁的力度，提前为每个线程分配好一段free内存，当线程内需要分配的内存不是特别大时，可以直接无锁的在本地缓存中进行分配，这种方式十分有效！
 
-<img src="../images/image-20211118005842113.png" alt="image-20211118005842113" style="zoom:50%;" />
+<img src="../../images/image-20211118005842113.png" alt="image-20211118005842113" style="zoom:50%;" />
 
 但是，这么做是不是说明我们找到银弹了呢，其实不是的，线程只解决了前两个问题，即：
 
@@ -217,15 +217,15 @@ task_struct是Linux内核的一种数据结构，它会被装载到RAM里并且�
 
 - N:1，N个协程绑定1个线程，优点就是**协程在用户态线程即完成切换，不会陷入到内核态，这种切换非常的轻量快速**。但也有很大的缺点，1个进程的所有协程都绑定在1个线程上，**一是某个程序用不了硬件的多核加速能力**，**二是一旦某协程阻塞，造成线程阻塞**，本进程的其他协程都无法执行了，根本就没有并发的能力了。
   
-  - ![img](../images/bVcTwI7.png)
+  - ![img](../../images/bVcTwI7.png)
 
 - 1:1，1个协程绑定1个线程，这种最容易实现。协程的调度都由内核完成了，不存在N:1缺点，但有一个缺点是协程的创建、删除和切换的代价都由内核完成，这跟线程差别不大。
   
-  - ![img](../images/bVcTwI4.png)
+  - ![img](../../images/bVcTwI4.png)
 
 - M:N，M个协程绑定N个线程，是N:1和1:1类型的结合，克服了以上2种模型的缺点，但实现起来最为复杂。
   
-  - ![img](../images/bVcTwI8.png)
+  - ![img](../../images/bVcTwI8.png)
 
 至此，对于协程和线程以及进程我们介绍到这里，相关的更多知识可以参考CSAPP这本书，讲的不错。
 
@@ -279,7 +279,7 @@ Go中，**协程被称为goroutine**（Rob Pike说goroutine不是协程，因为
 
 0.x 版本调度器只包含表示 Goroutine 的 G 和表示线程的 M 两种结构，全局也只有一个线程。我们可以在 [clean up scheduler](https://github.com/golang/go/commit/96824000ed89d13665f6f24ddc10b3bf812e7f47) 提交中找到单线程调度器的源代码，在这时 Go 语言的调度器还是由 C 语言实现的，调度函数 [`runtime.scheduler:9682400`](https://draveness.me/golang/tree/runtime.scheduler:9682400) 也只包含 40 多行代码 。
 
-<img src="../images/image-2021112220391899120211122203919.png" alt="image-20211122203918991" style="zoom:50%;" />
+<img src="../../images/image-2021112220391899120211122203919.png" alt="image-20211122203918991" style="zoom:50%;" />
 
 该函数会遵循如下的过程调度 Goroutine：
 
@@ -297,13 +297,13 @@ Go中，**协程被称为goroutine**（Rob Pike说goroutine不是协程，因为
 
 Go 语言在 1.0 版本正式发布时就支持了多线程的调度器，与上一个版本几乎不可用的调度器相比，Go 语言团队在这一阶段实现了从不可用到可用的跨越。我们可以在 [`pkg/runtime/proc.c`](https://github.com/golang/go/blob/go1.0.1/src/pkg/runtime/proc.c) 文件中找到 1.0.1 版本的调度器，多线程版本的调度函数 [`runtime.schedule:go1.0.1`](https://draveness.me/golang/tree/runtime.schedule:go1.0.1) 包含 70 多行代码。
 
-<img src="../images/image-2021112220401780520211122204018.png" alt="image-20211122204017805" style="zoom:50%;" />
+<img src="../../images/image-2021112220401780520211122204018.png" alt="image-20211122204017805" style="zoom:50%;" />
 
 整体的逻辑与单线程调度器没有太多区别，因为我们的程序中可能同时存在多个活跃线程，所以多线程调度器引入了 `GOMAXPROCS` 变量帮助我们灵活控制程序中的最大处理器数，即活跃线程数。
 
 ### 1. scheduler角色介绍
 
-<img src="../images/image-2021112220333288920211122203333.png" alt="image-20211122203332889" style="zoom:50%;" />
+<img src="../../images/image-2021112220333288920211122203333.png" alt="image-20211122203332889" style="zoom:50%;" />
 
 1. G：代表一个协程 Goroutine
 2. M：代表一个线程 Thread
@@ -311,7 +311,7 @@ Go 语言在 1.0 版本正式发布时就支持了多线程的调度器，与上
 
 #### G
 
-<img src="../images/image-2021112316425481020211123164255.png" alt="image-20211123164254810" style="zoom:67%;" />
+<img src="../../images/image-2021112316425481020211123164255.png" alt="image-20211123164254810" style="zoom:67%;" />
 
 ```c
 struct  G
@@ -328,7 +328,7 @@ struct  G
 
 #### M
 
-<img src="../images/image-2021112316523289520211123165233.png" alt="image-20211123165232895" style="zoom: 67%;" />
+<img src="../../images/image-2021112316523289520211123165233.png" alt="image-20211123165232895" style="zoom: 67%;" />
 
 ```c
 struct  M
@@ -356,7 +356,7 @@ struct  M
 
 #### Sched
 
-![image-20211123163824888](../images/image-202111231638248882021112316382520211123163905.png)
+![image-20211123163824888](../../images/image-202111231638248882021112316382520211123163905.png)
 
 ```c
 struct Sched {
@@ -400,11 +400,11 @@ struct Sched {
 
 ### 2. 整体一张图
 
-<img src="../images/tRxitB2021112415080420211124150920.jpg" alt="image-20211124150346130" style="zoom: 33%;" />
+<img src="../../images/tRxitB2021112415080420211124150920.jpg" alt="image-20211124150346130" style="zoom: 33%;" />
 
 ### 3. 整体初始化
 
-<img src="../images/GM-go%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B20211122202006.png" alt="GM-go启动流程" style="zoom:50%;" />
+<img src="../../images/GM-go%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B20211122202006.png" alt="GM-go启动流程" style="zoom:50%;" />
 
 可以看到，整个scheduler的生命周期贯穿了整个go程序，在程序启动之初，
 
@@ -416,7 +416,7 @@ struct Sched {
 
 #### 3.1 调度器初始化
 
-<img src="../images/image-2021112314455399820211123144554.png" alt="image-20211123144553998" style="zoom:67%;" />
+<img src="../../images/image-2021112314455399820211123144554.png" alt="image-20211123144553998" style="zoom:67%;" />
 
 ```c
 // The bootstrap sequence is:
@@ -496,7 +496,7 @@ mcommoninit(M *m)
 
 #### 3.3 启动m0
 
-<img src="../images/image-2021112312242153820211123122422.png" alt="image-20211123122421538" style="zoom:67%;" />
+<img src="../../images/image-2021112312242153820211123122422.png" alt="image-20211123122421538" style="zoom:67%;" />
 
 1. 在初始化完成后，紧接着汇编代码创建了g0，并将g0加入了全局g队列
 2. 紧接着调用mstart，mstart接着调用调度函数schedule()，为当前m寻找一个可用的g
@@ -530,12 +530,12 @@ runtime.mstart(void)
 
 #### 3.4 调度主流程
 
-<img src="../images/image-2021112312311612620211123123116.png" alt="image-20211123123116126" style="zoom:67%;" />
+<img src="../../images/image-2021112312311612620211123123116.png" alt="image-20211123123116126" style="zoom:67%;" />
 
 1. 首先，对全局加锁
 2. 入参如果为空，说明是启动过程中的调用，直接去寻找g并且全局解锁，这个时候寻找到的一定是g0
 3. 如果入参不为空，则说明是在m正在执行g的过程中进行了调度流程，需要对当前的g进行状态转换&暂存，此时的g可能是：
-   1. <img src="../images/image-2021112315235038820211123152350.png" alt="image-20211123152350388" style="zoom:50%;" />
+   1. <img src="../../images/image-2021112315235038820211123152350.png" alt="image-20211123152350388" style="zoom:50%;" />
    2. g主动让出 gosched()
    3. g执行完毕
 4. 寻找下一轮要执行的g & 解锁
@@ -585,7 +585,7 @@ schedule(G *gp)
 1. 首先，对全局加锁
 2. 入参如果为空，说明是启动过程中的调用，直接去寻找g并且全局解锁，这个时候寻找到的一定是g0
 3. 如果入参不为空，则说明是在m正在执行g的过程中进行了调度流程，需要对当前的g进行状态转换&暂存，此时的g可能是：
-   1. <img src="../images/image-2021112315235038820211123152350.png" alt="image-20211123152350388" style="zoom:50%;" />
+   1. <img src="../../images/image-2021112315235038820211123152350.png" alt="image-20211123152350388" style="zoom:50%;" />
    2. g主动让出 gosched()
    3. g执行完毕
 4. 寻找下一轮要执行的g & 解锁
@@ -593,7 +593,7 @@ schedule(G *gp)
 
 #### 3.5 寻找下一轮g
 
-<img src="../images/image-2021112314452601320211123144526.png" alt="image-20211123144526013" style="zoom:67%;" />
+<img src="../../images/image-2021112314452601320211123144526.png" alt="image-20211123144526013" style="zoom:67%;" />
 
 ```c
 static G*
@@ -656,11 +656,11 @@ top:
 
 #### 4.1 新协程的创建
 
-<img src="../images/image-2021112314525859820211123145259.png" alt="image-20211123145258598" style="zoom:50%;" />
+<img src="../../images/image-2021112314525859820211123145259.png" alt="image-20211123145258598" style="zoom:50%;" />
 
 当代码调用了go关键字时，会调用newproc函数
 
-<img src="../images/image-2021112314540849120211123145439.png" alt="image-20211123145408491" style="zoom: 67%;" />
+<img src="../../images/image-2021112314540849120211123145439.png" alt="image-20211123145408491" style="zoom: 67%;" />
 
 ```c
 runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
@@ -724,14 +724,14 @@ runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
 
 其中，标记g可运行会调用readylocked()函数
 
-<img src="../images/image-2021112315052758820211123150527.png" alt="image-20211123150527588" style="zoom:50%;" />
+<img src="../../images/image-2021112315052758820211123150527.png" alt="image-20211123150527588" style="zoom:50%;" />
 
 这个函数：
 
 1. 将g放入全局g列表表头
 2. 为g寻找m
 
-<img src="../images/image-2021112315075624520211123150756.png" alt="image-20211123150756245" style="zoom: 67%;" />
+<img src="../../images/image-2021112315075624520211123150756.png" alt="image-20211123150756245" style="zoom: 67%;" />
 
 这里，为g寻找m：
 
@@ -741,7 +741,7 @@ runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
    
    1. 创建的系统thread时，设置线程启动函数为mstart
    
-   2. <img src="../images/image-2021112315120336020211123151203.png" alt="image-20211123151203360" style="zoom: 50%;" />
+   2. <img src="../../images/image-2021112315120336020211123151203.png" alt="image-20211123151203360" style="zoom: 50%;" />
    
    3. ```c
       M*
@@ -778,7 +778,7 @@ runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
 
 3. 将g和m做关联，并且唤醒m所在线程
    
-   1. <img src="../images/image-2021112315101586020211123151016.png" alt="image-20211123151015860" style="zoom:67%;" />
+   1. <img src="../../images/image-2021112315101586020211123151016.png" alt="image-20211123151015860" style="zoom:67%;" />
 
 4. m所在线程开始从mstart开始运行
 
@@ -786,15 +786,15 @@ runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
 
 当代码中涉及到系统调用时，例如获取当前时间，读取磁盘，写磁盘，进行网络请求时，系统调用相关的lib会调用调度器相关的函数，对当前m和g进行相关操作。
 
-<img src="../images/image-2021112317393170320211123173932.png" alt="image-20211123173931703" style="zoom:50%;" />
+<img src="../../images/image-2021112317393170320211123173932.png" alt="image-20211123173931703" style="zoom:50%;" />
 
 ##### 系统调用入口
 
-<img src="../images/image-2021112317395997820211123174000.png" alt="image-20211123173959978" style="zoom:67%;" />
+<img src="../../images/image-2021112317395997820211123174000.png" alt="image-20211123173959978" style="zoom:67%;" />
 
 ##### 系统调用退出
 
-<img src="../images/image-2021112317205226420211123172052.png" alt="image-20211123172052264" style="zoom:67%;" />
+<img src="../../images/image-2021112317205226420211123172052.png" alt="image-20211123172052264" style="zoom:67%;" />
 
 当代码进行系统调用时，会修改当前g状态为syscall，且当前m会原地等待，等待syscall完成后，进行下一轮调度。
 
@@ -803,22 +803,22 @@ runtime.newproc1(byte *fn, byte *argp, int32 narg, int32 nret, void *callerpc)
 ##### golang函数调用惯例
 
 1. 假设当前寄存器和栈如上，bp指向s1，sp指向s3，ip指向a1，a1中的指令为call b1（调用b1处的指令）
-   1. <img src="../images/image-2021112322150673820211123221507.png" alt="image-20211123221506738" style="zoom:33%;" />
+   1. <img src="../../images/image-2021112322150673820211123221507.png" alt="image-20211123221506738" style="zoom:33%;" />
 2. 之后执行call指令，其作用有两点
    1. 把返回地址a2（a1 + sysDestLen）入栈保存起来
    2. 跳转到指令地址b1
-   3. <img src="../images/image-2021112322142110420211123221421.png" alt="image-20211123221421104" style="zoom:33%;" />
+   3. <img src="../../images/image-2021112322142110420211123221421.png" alt="image-20211123221421104" style="zoom:33%;" />
 3. 之后，函数b开始执行，在函数逻辑开始之前，先为自己分配好函数栈，并且将caller的栈基地址存入s4
-   1. <img src="../images/image-2021112322161152820211123221612.png" alt="image-20211123221611528" style="zoom:33%;" />
+   1. <img src="../../images/image-2021112322161152820211123221612.png" alt="image-20211123221611528" style="zoom:33%;" />
 4. 之后就是执行b函数的剩余代码了
 5. b函数执行完成后，编译器会执行两条恢复指令
    1. 恢复调用者a的栈基地址
    2. 释放自己的栈帧空间
-   3. <img src="../images/image-2021112322165925620211123221659.png" alt="image-20211123221659256" style="zoom:33%;" />
+   3. <img src="../../images/image-2021112322165925620211123221659.png" alt="image-20211123221659256" style="zoom:33%;" />
 6. 最后执行ret指令，结束函数调用并返回调用处
    1. 弹出函数调用的返回地址
    2. 跳转到这个地址
-   3. <img src="../images/image-2021112322182513720211123222108.png" alt="image-20211123221825137" style="zoom:33%;" />
+   3. <img src="../../images/image-2021112322182513720211123222108.png" alt="image-20211123221825137" style="zoom:33%;" />
 
 至此，函数调用完成，简单来说，每个函数通过call指令进行跳转，函数执行开始时创建新的栈，执行完成时会回收新建的栈，ret指令会将指令指针跳转至函数调用前的地址继续执行。
 
@@ -859,7 +859,7 @@ gogo函数伪造了call指令，在真正跳转到go func()函数之前，将goe
 
 ##### goexit()函数
 
-<img src="../images/image-2021112401104410420211124011044.png" alt="image-20211124011044104" style="zoom:50%;" />
+<img src="../../images/image-2021112401104410420211124011044.png" alt="image-20211124011044104" style="zoom:50%;" />
 
 goexit函数逻辑很简单，执行defer逻辑 & 调用schedule函数，开启下一轮
 
@@ -867,7 +867,7 @@ goexit函数逻辑很简单，执行defer逻辑 & 调用schedule函数，开启�
 
 至此，我们可以得到整个调度循环
 
-<img src="../images/image-2021112401262014520211124012620.png" alt="image-20211124012620145" style="zoom:50%;" />
+<img src="../../images/image-2021112401262014520211124012620.png" alt="image-20211124012620145" style="zoom:50%;" />
 
 从整个调度循环可以看到，调度的时机是在发生系统调用 & G运行完毕时。
 
@@ -879,7 +879,7 @@ goexit函数逻辑很简单，执行defer逻辑 & 调用schedule函数，开启�
 
 存在单一的全局mutex（Sched.Lock）和集中状态管理，mutex 需要保护所有与 goroutine 相关的操作（创建、完成、重排等），导致锁竞争严重。
 
-<img src="../images/image-2021112401410312520211124014103.png" alt="image-20211124014103125" style="zoom:50%;" />
+<img src="../../images/image-2021112401410312520211124014103.png" alt="image-20211124014103125" style="zoom:50%;" />
 
 最直观的，每次schedule函数开始时，都需要对全局进行加锁，然后再进行后续操作。[Scalable Go Scheduler Design Doc](https://docs.google.com/document/d/1TTj4T2JO42uD5ID9e89oa0sLKhJYD0Y_kqxDv3I3XMw/edit#!) 中做的性能测试发现 14% 的时间都花费在 [`runtime.futex:go1.0.1`](https://draveness.me/golang/tree/runtime.futex:go1.0.1) 上。
 
@@ -887,14 +887,14 @@ goexit函数逻辑很简单，执行defer逻辑 & 调用schedule函数，开启�
 
 当前G如果创建了G'，那么需要将当前新建的G'转交给其他的M'进行执行
 
-<img src="../images/image-2021112402002801520211124020028.png" alt="image-20211124020028015" style="zoom:50%;" />
+<img src="../../images/image-2021112402002801520211124020028.png" alt="image-20211124020028015" style="zoom:50%;" />
 
 - 其实如果使用当前M来执行G'的话，会有很好的局部性，因为M的mcache保存了很多G'需要的数据（例如已经初始化好的结构体等）
 - 新的M‘在接收到G'后，还需要很大的开销来构建G'运行的环境
 
 #### 3.mcache泛滥
 
-<img src="../images/image-2021112411503254820211124115032.png" alt="image-20211124115032548" style="zoom: 33%;" />
+<img src="../../images/image-2021112411503254820211124115032.png" alt="image-20211124115032548" style="zoom: 33%;" />
 
 - 真正正在执行的只有4个M，其他的M都在挂起等待状态，但是每个M都会分配一个mcache，其会吸纳到2M的内存缓存
 - 只有真正抢到CPU资源的M携带mcache即可
