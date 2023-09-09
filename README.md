@@ -4,11 +4,11 @@
 
 知识点的记忆碎片，写到这里吧，以防后面忘记:P
 
-| <img title="" src="file:///Users/jingtianyou/github/memento/images/2023-09-09-17-21-17-image.png" alt="" width="50">17-image.png" title="" alt="" width="112">17-image.png" title="" alt="" width="112">17-image.png" title="" alt="" width="112"> |                                     |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Blog:                                                                                                                                                                                                                                              | https://github.com/nber1994/memento |
-| Email:                                                                                                                                                                                                                                             | jingherego@gmail.com                |
-| Github:                                                                                                                                                                                                                                            | http://github.com/nber1994          |
+| <img title="" src="file:///Users/jingtianyou/github/memento/images/2023-09-09-17-21-17-image.png" alt="" width="50"> |                                     |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Blog:                                                                                                                | https://github.com/nber1994/memento |
+| Email:                                                                                                               | jingherego@gmail.com                |
+| Github:                                                                                                              | http://github.com/nber1994          |
 
 
 
