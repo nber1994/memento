@@ -20,7 +20,6 @@ func main() {
         fmt.Println(unsafe.Sizeof(i4))
         fmt.Println(unsafe.Sizeof(i5))
 }
-
 ```
 
 ```go
