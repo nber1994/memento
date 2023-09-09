@@ -1,11 +1,16 @@
 # memento
 
-知识点的记忆碎片，写到这里吧
 
-| Blog:   | https://github.com/nber1994/memento |
-| ------- | ----------------------------------- |
-| Email:  | jingherego@gmail.com                |
-| Github: | http://github.com/nber1994          |
+
+知识点的记忆碎片，写到这里吧，以防后面忘记:P
+
+| <img title="" src="file:///Users/jingtianyou/github/memento/images/2023-09-09-17-21-17-image.png" alt="" width="50">17-image.png" title="" alt="" width="112">17-image.png" title="" alt="" width="112">17-image.png" title="" alt="" width="112"> |                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Blog:                                                                                                                                                                                                                                              | https://github.com/nber1994/memento |
+| Email:                                                                                                                                                                                                                                             | jingherego@gmail.com                |
+| Github:                                                                                                                                                                                                                                            | http://github.com/nber1994          |
+
+
 
 # Books
 
@@ -35,7 +40,8 @@
 
 # Good Blog
 
-| 网址                               | 备注  |
-| -------------------------------- | --- |
-| [Go夜读](https://talkgo.org/)      |     |
-| [tony bai](https://tonybai.com/) |     |
+| 网址                               | 备注                                      |
+| -------------------------------- | --------------------------------------- |
+| [Go夜读](https://talkgo.org/)      | 视频讲解质量不错，但是做了这么多期唯独缺少对sync.mutex的源码讲解:P |
+| [煎鱼](https://eddycjy.com/)       | 这哥们有很多自己的理解                             |
+| [tony bai](https://tonybai.com/) | 有好多实际工作中应用出发的文章，非单纯的八股                  |
