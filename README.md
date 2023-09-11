@@ -20,9 +20,11 @@
 
 - [无插件vim编程技巧](https://github.com/nber1994/memento/blob/main/vim/%E6%97%A0%E6%8F%92%E4%BB%B6vim%E7%BC%96%E7%A8%8B%E6%8A%80%E5%B7%A7.md)
 
+# 捣鼓
 
+- [复刻小红点](https://github.com/nber1994/memento/blob/main/diy/%E5%A4%8D%E5%88%BB%E5%B0%8F%E7%BA%A2%E7%82%B9.md)
 
-
+- 
 
 # About
 
