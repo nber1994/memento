@@ -1,16 +1,37 @@
 # memento
 
-
-
 知识点的记忆碎片，写到这里吧，以防后面忘记:P
 
-| <img title="" src="file:///Users/jingtianyou/github/memento/images/2023-09-09-17-21-17-image.png" alt="" width="50"> |                                     |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Blog:                                                                                                                | https://github.com/nber1994/memento |
-| Email:                                                                                                               | jingherego@gmail.com                |
-| Github:                                                                                                              | http://github.com/nber1994          |
+# 目录
 
+<div>
+<table>
+   <tr>
+      <td rowspan="3"><img src="./images/2023-09-09-17-22-07-image.png" height="100" /></td>
+      <td>Blog:</td>
+      <td><a href="https://github.com/nber1994/memento">https://github.com/nber1994/memento</a></td>
+   </tr>
+   <tr>
+      <!-- <td></td> -->
+      <td>Email:</td>
+      <td><a href="jingherego@gmail.com">jingherego@gmail.com</a></td>
+   </tr>
+   <tr>
+      <!-- <td></td> -->
+      <td>Github:</td>
+      <td><a href="https://github.com/nber1994">https://github.com/nber1994</a></td>
+   </tr>
+   <!-- <tr>
+      <td></td>
+   </tr> -->
+</table>
 
+</div>
+
+| Blog:   | https://github.com/nber1994/memento |
+| ------- | ----------------------------------- |
+| Email:  | jingherego@gmail.com                |
+| Github: | http://github.com/nber1994          |
 
 # Books
 
