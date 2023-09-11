@@ -24,7 +24,7 @@
 
 - [复刻小红点](https://github.com/nber1994/memento/blob/main/diy/%E5%A4%8D%E5%88%BB%E5%B0%8F%E7%BA%A2%E7%82%B9.md)
 
-- 
+- [复刻麦金塔](https://github.com/nber1994/memento/blob/main/diy/%E5%A4%8D%E5%88%BB%E9%BA%A6%E9%87%91%E5%A1%94.md)
 
 # About
 
