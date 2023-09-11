@@ -1,18 +1,30 @@
 # memento
 
-知识点的记忆碎片，写到这里吧，以防后面忘记:P
+知识点的记忆碎片，写到这里吧，有些topic只挖了个坑，还没填:P
 
-# 目录
+# 近期原创推荐
 
-|     |     |     |
-| --- | --- | --- |
-|     |     |     |
-|     |     |     |
-|     |     |     |
-|     |     |     |
-|     |     |     |
+- [Go的scheduler浅析 上](https://github.com/nber1994/memento/blob/main/golang/%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/scheduler%E6%BA%90%E7%A0%81%E4%B8%8A.md)
+
+- [Go的scheduler浅析 下](https://github.com/nber1994/memento/blob/main/golang/%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/scheduler%E6%BA%90%E7%A0%81%E4%B8%8B.md)
+
+- [Go的sync.mutex的前世今生](https://github.com/nber1994/memento/blob/main/golang/%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/sync.mutex%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90.md)
+
+- [并发编程与Go的channel & select](https://github.com/nber1994/memento/blob/main/golang/%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/channel%20%26%20select.md)
+
+- [实现一个简单的DSL解释器（动态版Go）](https://github.com/nber1994/memento/blob/main/golang/%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84DSL%E8%A7%A3%E9%87%8A%E5%99%A8.md)
+
+- [Redis的scan命令遇上rehash](https://github.com/nber1994/memento/blob/main/redis/scan%E9%81%87%E4%B8%8Arehash.md)
+
+- [lnmp报错too-big-header错误探究](https://github.com/nber1994/memento/blob/main/troubleshoot/lnmp%E6%8A%A5%E9%94%99too-big-header%E9%94%99%E8%AF%AF%E6%8E%A2%E7%A9%B6.md)
+
+- [无插件vim编程技巧](https://github.com/nber1994/memento/blob/main/vim/%E6%97%A0%E6%8F%92%E4%BB%B6vim%E7%BC%96%E7%A8%8B%E6%8A%80%E5%B7%A7.md)
 
 
+
+
+
+# About
 
 <div>
 <table>
@@ -35,44 +47,3 @@
       <td></td>
    </tr> -->
 </table>
-
-</div>
-
-| Blog:   | https://github.com/nber1994/memento |
-| ------- | ----------------------------------- |
-| Email:  | jingherego@gmail.com                |
-| Github: | http://github.com/nber1994          |
-
-# Books
-
-### Reading
-
-| 书名                                             | 备注                           |
-|:---------------------------------------------- |:---------------------------- |
-| [Go语言学习笔记](https://item.jd.com/11944267.html)  |                              |
-| [Go语言设计与实现](https://item.jd.com/13521160.html) | https://draveness.me/golang/ |
-
-### Readed
-
-| 书名                                                        | 备注                                                               |
-|:--------------------------------------------------------- |:---------------------------------------------------------------- |
-| [深入理解计算机系统](https://item.jd.com/12006637.html)            | https://hansimov.gitbook.io/csapp/ <br>https://ihpm.cn/277/.html |
-| [高性能MySQL](https://item.jd.com/11220393.html)             |                                                                  |
-| [MySQL技术内幕:InnoDB存储引擎](https://item.jd.com/11252326.html) | http://itmyhome.com/mysql-innodb/                                |
-| [Redis设计与实现](https://item.jd.com/11486101.html)           | http://redisbook.com/                                            |
-| [图解TCP/IP](https://item.jd.com/11253710.html)             |                                                                  |
-| [图解HTTP](https://item.jd.com/11449491.html)               |                                                                  |
-
-### To Read
-
-| 书名                                                 | 备注                         |
-| -------------------------------------------------- | -------------------------- |
-| [现代操作系统（原书第4版）](https://item.jd.com/12139635.html) | https://ihpm.cn/1267/.html |
-
-# Good Blog
-
-| 网址                               | 备注                                      |
-| -------------------------------- | --------------------------------------- |
-| [Go夜读](https://talkgo.org/)      | 视频讲解质量不错，但是做了这么多期唯独缺少对sync.mutex的源码讲解:P |
-| [煎鱼](https://eddycjy.com/)       | 这哥们有很多自己的理解                             |
-| [tony bai](https://tonybai.com/) | 有好多实际工作中应用出发的文章，非单纯的八股                  |
